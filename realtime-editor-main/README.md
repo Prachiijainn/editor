@@ -1,70 +1,238 @@
-# Getting Started with Create React App
+# Real-Time Online Code Editor with Terminal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A powerful online code editor with real-time collaboration, integrated terminal, and multi-language support. Features real-time terminal output streaming, PTY (pseudo-terminal) support, and collaborative coding capabilities.
 
-## Available Scripts
+## 🚀 Features
 
-In the project directory, you can run:
+### Real-Time Terminal
+- **Live Terminal Output**: Real-time streaming of stdout/stderr from executed commands
+- **PTY Support**: Full pseudo-terminal support for interactive applications
+- **Multi-User Terminal**: Collaborative terminal sessions across multiple users
+- **Process Management**: Ability to stop, interrupt, and manage running processes
+- **Terminal Resize**: Dynamic terminal resizing with proper PTY handling
 
-### `npm start`
+### Code Execution
+- **Multi-Language Support**: JavaScript, Python, C, C++
+- **Real-Time Output**: Live streaming of compilation and execution results
+- **Error Handling**: Comprehensive error reporting and debugging
+- **Process Control**: Stop execution, interrupt processes, and manage resources
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Collaboration
+- **Real-Time Editing**: Live code synchronization across multiple users
+- **Terminal Sharing**: Collaborative terminal sessions
+- **User Presence**: See who's connected and their activities
+- **Room-Based**: Private rooms for different coding sessions
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### File Management
+- **Workspace Isolation**: Separate workspaces for each room
+- **File Operations**: Read, write, and list files in workspace
+- **Persistent Storage**: Files persist during the session
 
-### `npm test`
+## 🛠️ Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
+- Git
 
-### `npm run build`
+### Backend Dependencies
+The following system dependencies are required for full functionality:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+#### Ubuntu/Debian:
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential python3 python3-pip nodejs npm
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+#### macOS:
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Install Python (if not already installed)
+brew install python3
+```
 
-### `npm run eject`
+#### Windows:
+```bash
+# Install Visual Studio Build Tools
+# Download from: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2019
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Install Python from: https://www.python.org/downloads/
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Installation Steps
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. **Clone the repository**:
+```bash
+git clone <repository-url>
+cd realtime-editor-main
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+2. **Install dependencies**:
+```bash
+npm install
+```
 
-## Learn More
+3. **Build the frontend**:
+```bash
+npm run build
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+4. **Start the server**:
+```bash
+npm start
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The application will be available at `http://localhost:3333`
 
-### Code Splitting
+## 🎯 Usage
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Starting a Session
+1. Open the application in your browser
+2. Enter your username
+3. Create or join a room
+4. Start coding and using the terminal!
 
-### Analyzing the Bundle Size
+### Using the Terminal
+- **Real-time commands**: Type commands and see immediate output
+- **Process control**: Use Ctrl+C to interrupt processes
+- **File operations**: Use standard Unix commands (ls, cd, cat, etc.)
+- **Code execution**: Run your compiled/interpreted code directly
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Code Execution
+1. Select your programming language
+2. Write your code in the editor
+3. Click "Run" to execute
+4. See real-time output in the terminal
 
-### Making a Progressive Web App
+### Collaboration
+- Multiple users can join the same room
+- All users see real-time code changes
+- Terminal output is shared across all users
+- User presence indicators show who's connected
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🔧 Configuration
 
-### Advanced Configuration
+### Environment Variables
+Create a `.env` file in the root directory:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```env
+PORT=3333
+REACT_APP_BACKEND_URL=http://localhost:3333
+NODE_ENV=development
+```
 
-### Deployment
+### Server Configuration
+The server can be configured in `server.js`:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```javascript
+// Terminal configuration
+const terminalConfig = {
+    cols: 80,
+    rows: 24,
+    cwd: workspacePath,
+    env: process.env
+};
 
-### `npm run build` fails to minify
+// Process timeout (in milliseconds)
+const PROCESS_TIMEOUT = 30000;
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Terminal Not Responding
+1. **Check WebSocket connection**: Ensure the backend is running
+2. **Verify PTY support**: Check if node-pty is properly installed
+3. **Check browser console**: Look for WebSocket errors
+4. **Restart the server**: Sometimes PTY processes need a fresh start
+
+#### Code Execution Issues
+1. **Language support**: Ensure the required runtime is installed
+2. **File permissions**: Check workspace directory permissions
+3. **Process limits**: Some systems have process limits
+4. **Memory issues**: Long-running processes may be killed
+
+#### WebSocket Connection Issues
+1. **CORS settings**: Check browser CORS policies
+2. **Firewall**: Ensure port 3333 is open
+3. **Proxy settings**: Configure proxy if behind corporate firewall
+4. **SSL/TLS**: Use HTTPS in production
+
+### Debug Mode
+Enable debug logging by setting the environment variable:
+
+```bash
+DEBUG=* npm start
+```
+
+### Performance Optimization
+1. **Limit concurrent processes**: Configure max processes per room
+2. **Memory management**: Monitor memory usage
+3. **Process cleanup**: Ensure proper cleanup on disconnect
+4. **WebSocket optimization**: Use binary transport for large outputs
+
+## 🔒 Security Considerations
+
+### Production Deployment
+1. **HTTPS**: Always use HTTPS in production
+2. **Authentication**: Implement user authentication
+3. **Rate limiting**: Prevent abuse of terminal commands
+4. **Process isolation**: Use containers for process isolation
+5. **File system security**: Restrict file system access
+
+### Security Best Practices
+- Validate all user inputs
+- Sanitize terminal commands
+- Implement proper session management
+- Use secure WebSocket connections
+- Monitor for suspicious activities
+
+## 📊 Monitoring
+
+### Health Checks
+The server provides health check endpoints:
+
+```bash
+# Check server status
+curl http://localhost:3333/health
+
+# Check WebSocket connection
+curl http://localhost:3333/ws-health
+```
+
+### Logging
+Server logs include:
+- WebSocket connections/disconnections
+- Terminal process creation/destruction
+- Code execution events
+- Error messages and stack traces
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- [node-pty](https://github.com/microsoft/node-pty) for PTY support
+- [xterm.js](https://xtermjs.org/) for terminal emulation
+- [Socket.IO](https://socket.io/) for real-time communication
+- [CodeMirror](https://codemirror.net/) for code editing
+
+## 📞 Support
+
+For issues and questions:
+1. Check the troubleshooting section
+2. Search existing issues
+3. Create a new issue with detailed information
+4. Include system information and error logs

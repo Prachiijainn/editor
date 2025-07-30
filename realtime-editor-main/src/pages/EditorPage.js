@@ -3,6 +3,8 @@ import toast from 'react-hot-toast';
 import ACTIONS from '../Actions';
 import Client from '../components/Client';
 import Editor from '../components/Editor';
+import TerminalComponent from '../components/Terminal';
+import OutputPanel from '../components/OutputPanel';
 import { initSocket } from '../socket';
 import {
     useLocation,
@@ -18,6 +20,10 @@ const EditorPage = () => {
     const { roomId } = useParams();
     const reactNavigator = useNavigate();
     const [clients, setClients] = useState([]);
+    const [isTerminalVisible, setIsTerminalVisible] = useState(false);
+    const [isOutputVisible, setIsOutputVisible] = useState(false);
+    const [output, setOutput] = useState(null);
+    const [isExecuting, setIsExecuting] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -87,6 +93,36 @@ const EditorPage = () => {
         reactNavigator('/');
     }
 
+    const toggleTerminal = () => {
+        setIsTerminalVisible(!isTerminalVisible);
+        if (isOutputVisible) {
+            setIsOutputVisible(false);
+        }
+    };
+
+    const toggleOutput = () => {
+        setIsOutputVisible(!isOutputVisible);
+        if (isTerminalVisible) {
+            setIsTerminalVisible(false);
+        }
+    };
+
+    const handleOutputChange = (newOutput) => {
+        setOutput(newOutput);
+        if (newOutput) {
+            setIsOutputVisible(true);
+        }
+    };
+
+    const handleClearOutput = () => {
+        setOutput(null);
+    };
+
+    const handleStopExecution = () => {
+        setIsExecuting(false);
+        // Additional stop logic can be added here
+    };
+
     if (!location.state) {
         return <Navigate to="/" />;
     }
@@ -126,8 +162,47 @@ const EditorPage = () => {
                     onCodeChange={(code) => {
                         codeRef.current = code;
                     }}
+                    onOutputChange={handleOutputChange}
+                    isOutputVisible={isOutputVisible}
                 />
             </div>
+            
+            {/* Output Panel */}
+            <OutputPanel
+                isVisible={isOutputVisible}
+                output={output}
+                isExecuting={isExecuting}
+                onClear={handleClearOutput}
+                onStop={handleStopExecution}
+                onToggle={toggleOutput}
+                language={output?.language}
+            />
+            
+            {/* Output Toggle Button */}
+            <button 
+                className="output-toggle-btn"
+                onClick={toggleOutput}
+                title="Toggle Output Panel"
+            >
+                {isOutputVisible ? '−' : '▶'}
+            </button>
+            
+            {/* Terminal Toggle Button */}
+            <button 
+                className="terminal-toggle-btn"
+                onClick={toggleTerminal}
+                title="Toggle Terminal"
+            >
+                {isTerminalVisible ? '−' : '⚡'}
+            </button>
+            
+            {/* Terminal Component */}
+            <TerminalComponent
+                socketRef={socketRef}
+                roomId={roomId}
+                isVisible={isTerminalVisible}
+                onToggle={toggleTerminal}
+            />
         </div>
     );
 };

@@ -5,7 +5,12 @@ export const initSocket = async () => {
         'force new connection': true,
         reconnectionAttempt: 'Infinity',
         timeout: 10000,
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
+        upgrade: true,
+        rememberUpgrade: true,
     };
-    return io(process.env.REACT_APP_BACKEND_URL, options);
+    
+    // Use the same host and port as the server
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3333';
+    return io(backendUrl, options);
 };

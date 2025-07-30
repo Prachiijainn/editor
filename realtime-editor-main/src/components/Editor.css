@@ -1,0 +1,153 @@
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #1e1e1e;
+}
+
+.editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #444;
+    gap: 16px;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.run-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #50fa7b;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #1e1e1e;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.run-button:hover:not(:disabled) {
+    background: #69ff94;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(80, 250, 123, 0.3);
+}
+
+.run-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.run-button.executing {
+    background: #f1fa8c;
+    color: #1e1e1e;
+}
+
+.run-button.executing:hover {
+    background: #f1fa8c;
+    transform: none;
+    box-shadow: none;
+}
+
+.run-icon {
+    font-size: 12px;
+}
+
+.stop-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff5555;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #1e1e1e;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 40px;
+}
+
+.stop-button:hover {
+    background: #ff6e67;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 85, 85, 0.3);
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* CodeMirror customizations */
+.editor-container .CodeMirror {
+    flex: 1;
+    height: auto;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.editor-container .CodeMirror-scroll {
+    background: #1e1e1e;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .editor-toolbar {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    
+    .run-button {
+        padding: 6px 12px;
+        font-size: 13px;
+        min-width: 70px;
+    }
+    
+    .stop-button {
+        padding: 6px 10px;
+        font-size: 13px;
+        min-width: 35px;
+    }
+    
+    .editor-container .CodeMirror {
+        font-size: 14px;
+    }
+}
+
+/* Focus styles */
+.run-button:focus,
+.stop-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(80, 250, 123, 0.4);
+}
+
+/* Animation for button press */
+.run-button:active:not(:disabled),
+.stop-button:active {
+    transform: translateY(0);
+    box-shadow: none;
+} 
