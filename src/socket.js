@@ -11,6 +11,6 @@ export const initSocket = async () => {
     };
     
     // Use the same host and port as the server
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3333';
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://realtime-editor-2b16.onrender.com';
     return io(backendUrl, options);
 };
