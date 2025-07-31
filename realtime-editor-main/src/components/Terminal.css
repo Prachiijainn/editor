@@ -1,0 +1,237 @@
+.terminal-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1e1e1e;
+    border-top: 2px solid #333;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    transition: height 0.2s ease;
+}
+
+.terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #444;
+    user-select: none;
+}
+
+.terminal-title {
+    display: flex;
+    align-items: center;
+    color: #f8f8f2;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.terminal-icon {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.connection-status {
+    margin-left: 8px;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: normal;
+}
+
+.connection-status.connected {
+    color: #50fa7b;
+    background: rgba(80, 250, 123, 0.1);
+    border: 1px solid rgba(80, 250, 123, 0.3);
+}
+
+.connection-status.disconnected {
+    color: #ff5555;
+    background: rgba(255, 85, 85, 0.1);
+    border: 1px solid rgba(255, 85, 85, 0.3);
+}
+
+.terminal-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.terminal-control-btn {
+    background: transparent;
+    border: none;
+    color: #f8f8f2;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.terminal-control-btn:hover {
+    background: #444;
+}
+
+.terminal-control-btn.minimize:hover {
+    background: #666;
+}
+
+.terminal-content {
+    flex: 1;
+    padding: 8px;
+    overflow: hidden;
+}
+
+.terminal-resize-handle {
+    height: 4px;
+    background: #444;
+    cursor: ns-resize;
+    position: relative;
+}
+
+.terminal-resize-handle:hover {
+    background: #666;
+}
+
+.terminal-resize-handle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 2px;
+    background: #888;
+    border-radius: 1px;
+}
+
+/* XTerm.js customizations */
+.terminal-container .xterm {
+    background: #1e1e1e;
+    padding: 8px;
+}
+
+.terminal-container .xterm-viewport {
+    background: #1e1e1e;
+}
+
+.terminal-container .xterm-screen {
+    background: #1e1e1e;
+}
+
+/* Real-time output styling */
+.terminal-container .xterm .xterm-viewport::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terminal-container .xterm .xterm-viewport::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+.terminal-container .xterm .xterm-viewport::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.terminal-container .xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+/* Terminal toggle button */
+.terminal-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #2d2d2d;
+    border: 2px solid #444;
+    color: #f8f8f2;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    z-index: 999;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.terminal-toggle-btn:hover {
+    background: #444;
+    transform: scale(1.1);
+}
+
+.terminal-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+/* Animation for terminal appearance */
+.terminal-container {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .terminal-container {
+        height: 50vh !important;
+    }
+    
+    .terminal-toggle-btn {
+        bottom: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+}
+
+/* Dark theme consistency */
+.terminal-container {
+    color-scheme: dark;
+}
+
+/* Focus styles */
+.terminal-container:focus-within {
+    border-top-color: #007acc;
+}
+
+/* Real-time typing indicator */
+.terminal-container .xterm-cursor {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Output streaming animation */
+.terminal-container .xterm-viewport {
+    scroll-behavior: smooth;
+}
+
+/* Connection status animation */
+.connection-status.connected {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+} 
