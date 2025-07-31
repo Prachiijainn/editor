@@ -17,6 +17,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
     const [isResizing, setIsResizing] = useState(false);
     const [terminalHeight, setTerminalHeight] = useState(300);
     const [isConnected, setIsConnected] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     // Initialize terminal
     useEffect(() => {
@@ -24,6 +25,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
 
         const term = new Terminal({
             cursorBlink: true,
+            cursorStyle: 'block',
             theme: {
                 background: '#1e1e1e',
                 foreground: '#f8f8f2',
@@ -52,6 +54,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
             scrollback: 1000,
             cols: 80,
             rows: 20,
+            allowTransparency: true,
         });
 
         const fitAddon = new FitAddon();
@@ -78,6 +81,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
         term.writeln('\x1b[1;33mConnected to server terminal session.\x1b[0m');
         term.writeln('\x1b[1;32mType your commands and press Enter to execute.\x1b[0m');
         term.writeln('\x1b[1;33mUse Ctrl+C to interrupt running processes.\x1b[0m');
+        term.writeln('\x1b[1;35mUse ↑/↓ arrows to navigate command history.\x1b[0m');
         term.writeln('');
 
         // Handle terminal input
@@ -89,6 +93,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                 // Only show output for the current room
                 if (data.roomId === roomId) {
                     term.write(data.output);
+                    setIsProcessing(false);
                 }
             });
 
@@ -96,6 +101,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                 if (data.roomId === roomId) {
                     term.writeln(`\r\n\x1b[1;31mTerminal session ended (exit code: ${data.exitCode})\x1b[0m`);
                     setIsConnected(false);
+                    setIsProcessing(false);
                 }
             });
 
@@ -149,6 +155,13 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
             const command = line.translateToString().trim();
 
             if (command) {
+                // Add to command history
+                setCommandHistory(prev => [...prev, command]);
+                setHistoryIndex(-1);
+                setCurrentCommand('');
+                setIsConnected(true);
+                setIsProcessing(true);
+                
                 // Emit command to backend via socket for real-time execution
                 if (socketRef && socketRef.current) {
                     socketRef.current.emit('terminal-command', {
@@ -156,11 +169,6 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                         roomId
                     });
                 }
-                
-                setCommandHistory(prev => [...prev, command]);
-                setHistoryIndex(-1);
-                setCurrentCommand('');
-                setIsConnected(true);
             }
             terminal.write('\r\n');
         } else if (code === 8) { // Backspace
@@ -173,6 +181,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
         } else if (code === 3) { // Ctrl+C
             terminal.write('^C\r\n');
             terminal.write('\x1b[1;33mProcess interrupted\x1b[0m\r\n');
+            setIsProcessing(false);
         } else if (code === 26) { // Ctrl+Z
             terminal.write('^Z\r\n');
             terminal.write('\x1b[1;33mProcess suspended\x1b[0m\r\n');
@@ -185,6 +194,14 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                     return;
                 } else if (thirdChar === 66) { // Down arrow
                     navigateHistory('down');
+                    return;
+                } else if (thirdChar === 67) { // Right arrow
+                    // Allow normal cursor movement
+                    terminal.write(data);
+                    return;
+                } else if (thirdChar === 68) { // Left arrow
+                    // Allow normal cursor movement
+                    terminal.write(data);
                     return;
                 }
             }
@@ -264,6 +281,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                     <span className="terminal-icon">⚡</span>
                     Terminal
                     {isConnected && <span className="connection-status connected">●</span>}
+                    {isProcessing && <span className="processing-indicator">⟳</span>}
                 </div>
                 <div className="terminal-controls">
                     <button 

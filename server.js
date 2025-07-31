@@ -315,7 +315,10 @@ io.on('connection', (socket) => {
                 terminal = await initializeTerminal(roomId, socket.id);
             }
             
-            terminal.write(command + '\r');
+            // Send command with newline to execute it
+            terminal.write(command + '\n');
+            
+            console.log(`Terminal command executed: ${command} in room ${roomId}`);
         } catch (error) {
             console.error('Terminal command error:', error);
             socket.emit(ACTIONS.TERMINAL_OUTPUT, {

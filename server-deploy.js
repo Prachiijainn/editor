@@ -258,6 +258,70 @@ io.on('connection', (socket) => {
         io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
     });
 
+    // Terminal command handling (simulated for deployment)
+    socket.on(ACTIONS.TERMINAL_COMMAND, async ({ roomId, command }) => {
+        try {
+            console.log(`Terminal command received: ${command} in room ${roomId}`);
+            
+            // Simulate basic terminal commands for deployment
+            const { spawn } = require('child_process');
+            const workspacePath = workspacePaths.get(roomId) || path.join(workspaceDir, roomId);
+            
+            // Execute command in the workspace directory
+            const process = spawn(command, [], { 
+                cwd: workspacePath,
+                shell: true,
+                stdio: ['pipe', 'pipe', 'pipe']
+            });
+
+            process.stdout.on('data', (data) => {
+                socket.emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: data.toString(),
+                    socketId: socket.id
+                });
+            });
+
+            process.stderr.on('data', (data) => {
+                socket.emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: data.toString(),
+                    socketId: socket.id
+                });
+            });
+
+            process.on('close', (exitCode) => {
+                socket.emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: `\r\nCommand completed with exit code: ${exitCode}\r\n`,
+                    socketId: socket.id
+                });
+            });
+
+            process.on('error', (error) => {
+                socket.emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: `Error: ${error.message}\r\n`,
+                    socketId: socket.id
+                });
+            });
+
+        } catch (error) {
+            console.error('Terminal command error:', error);
+            socket.emit(ACTIONS.TERMINAL_OUTPUT, {
+                roomId,
+                output: `Error: ${error.message}\r\n`,
+                socketId: socket.id
+            });
+        }
+    });
+
+    // Terminal resize handling (no-op for deployment)
+    socket.on(ACTIONS.TERMINAL_RESIZE, ({ roomId, cols, rows }) => {
+        // No-op for deployment version
+        console.log(`Terminal resize: ${cols}x${rows} for room ${roomId}`);
+    });
+
     // Code execution handling
     socket.on(ACTIONS.EXECUTE_CODE, async ({ roomId, code, language }) => {
         try {
