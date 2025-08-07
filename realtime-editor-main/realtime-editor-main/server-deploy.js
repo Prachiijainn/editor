@@ -27,9 +27,8 @@ const io = new Server(server, {
     }
 });
 
-// Store active terminals and processes
+// Store active processes
 const userSocketMap = {};
-const activeTerminals = new Map();
 const activeProcesses = new Map();
 const workspacePaths = new Map();
 
@@ -48,53 +47,6 @@ function getAllConnectedClients(roomId) {
     );
 }
 
-// Initialize terminal for a room
-async function initializeTerminal(roomId, socketId) {
-    try {
-        const pty = require('node-pty');
-        const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
-        
-        const workspacePath = path.join(workspaceDir, roomId);
-        fs.ensureDirSync(workspacePath);
-        workspacePaths.set(roomId, workspacePath);
-
-        const terminal = pty.spawn(shell, [], {
-            name: 'xterm-color',
-            cols: 80,
-            rows: 24,
-            cwd: workspacePath,
-            env: process.env
-        });
-
-        activeTerminals.set(roomId, terminal);
-
-        // Handle terminal data
-        terminal.onData((data) => {
-            io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
-                roomId,
-                output: data,
-                socketId
-            });
-        });
-
-        // Handle terminal exit
-        terminal.onExit(({ exitCode, signal }) => {
-            io.to(roomId).emit(ACTIONS.TERMINAL_EXIT, {
-                roomId,
-                exitCode,
-                signal,
-                socketId
-            });
-            activeTerminals.delete(roomId);
-        });
-
-        return terminal;
-    } catch (error) {
-        console.error('Failed to initialize terminal:', error);
-        throw error;
-    }
-}
-
 // Execute code with real-time output
 async function executeCode(code, language, roomId, socketId) {
     try {
@@ -111,7 +63,7 @@ async function executeCode(code, language, roomId, socketId) {
                 break;
             case 'python':
                 filename = 'script.py';
-                command = 'python';
+                command = 'python3';
                 args = [filename];
                 break;
             case 'cpp':
@@ -306,37 +258,6 @@ io.on('connection', (socket) => {
         io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
     });
 
-    // Terminal command handling
-    socket.on(ACTIONS.TERMINAL_COMMAND, async ({ roomId, command }) => {
-        try {
-            let terminal = activeTerminals.get(roomId);
-            
-            if (!terminal) {
-                terminal = await initializeTerminal(roomId, socket.id);
-            }
-            
-            // Send command with newline to execute it
-            terminal.write(command + '\n');
-            
-            console.log(`Terminal command executed: ${command} in room ${roomId}`);
-        } catch (error) {
-            console.error('Terminal command error:', error);
-            socket.emit(ACTIONS.TERMINAL_OUTPUT, {
-                roomId,
-                output: `Error: ${error.message}\r\n`,
-                socketId: socket.id
-            });
-        }
-    });
-
-    // Terminal resize handling
-    socket.on(ACTIONS.TERMINAL_RESIZE, ({ roomId, cols, rows }) => {
-        const terminal = activeTerminals.get(roomId);
-        if (terminal) {
-            terminal.resize(cols, rows);
-        }
-    });
-
     // Code execution handling
     socket.on(ACTIONS.EXECUTE_CODE, async ({ roomId, code, language }) => {
         try {
@@ -455,13 +376,8 @@ process.on('SIGINT', () => {
         process.kill('SIGTERM');
     });
     
-    // Kill all active terminals
-    activeTerminals.forEach((terminal) => {
-        terminal.kill();
-    });
-    
     process.exit(0);
 });
 
-const PORT = process.env.PORT || 3333;
-server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, () => console.log(`Deployment server listening on port ${PORT}`)); 

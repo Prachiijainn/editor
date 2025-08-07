@@ -1,0 +1,156 @@
+.language-selector {
+    position: relative;
+    display: inline-block;
+}
+
+.language-selector-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #f8f8f2;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: 140px;
+}
+
+.language-selector-btn:hover {
+    background: #444;
+    border-color: #666;
+}
+
+.language-selector-btn:focus {
+    outline: none;
+    border-color: #50fa7b;
+    box-shadow: 0 0 0 2px rgba(80, 250, 123, 0.2);
+}
+
+.language-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.language-name {
+    flex: 1;
+    text-align: left;
+}
+
+.dropdown-arrow {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    color: #888;
+}
+
+.dropdown-arrow.open {
+    transform: rotate(180deg);
+}
+
+.language-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    margin-top: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.language-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    color: #f8f8f2;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+.language-option:hover {
+    background: #444;
+}
+
+.language-option.selected {
+    background: #50fa7b;
+    color: #1e1e1e;
+}
+
+.language-option.selected .language-icon {
+    color: #1e1e1e !important;
+}
+
+.selected-indicator {
+    margin-left: auto;
+    font-weight: bold;
+    color: #1e1e1e;
+}
+
+/* Scrollbar for dropdown */
+.language-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.language-dropdown::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    border-radius: 3px;
+}
+
+.language-dropdown::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+}
+
+.language-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+/* Animation for dropdown */
+.language-dropdown {
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .language-selector-btn {
+        min-width: 120px;
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+    
+    .language-icon {
+        font-size: 14px;
+        width: 18px;
+    }
+    
+    .language-option {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+} 

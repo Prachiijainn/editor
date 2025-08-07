@@ -7,7 +7,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs-extra');
 const os = require('os');
-const ACTIONS = require('./src/Actions');
 
 // Initialize express app
 app.use(cors());
@@ -27,9 +26,8 @@ const io = new Server(server, {
     }
 });
 
-// Store active terminals and processes
+// Store active processes
 const userSocketMap = {};
-const activeTerminals = new Map();
 const activeProcesses = new Map();
 const workspacePaths = new Map();
 
@@ -46,53 +44,6 @@ function getAllConnectedClients(roomId) {
             };
         }
     );
-}
-
-// Initialize terminal for a room
-async function initializeTerminal(roomId, socketId) {
-    try {
-        const pty = require('node-pty');
-        const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
-        
-        const workspacePath = path.join(workspaceDir, roomId);
-        fs.ensureDirSync(workspacePath);
-        workspacePaths.set(roomId, workspacePath);
-
-        const terminal = pty.spawn(shell, [], {
-            name: 'xterm-color',
-            cols: 80,
-            rows: 24,
-            cwd: workspacePath,
-            env: process.env
-        });
-
-        activeTerminals.set(roomId, terminal);
-
-        // Handle terminal data
-        terminal.onData((data) => {
-            io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
-                roomId,
-                output: data,
-                socketId
-            });
-        });
-
-        // Handle terminal exit
-        terminal.onExit(({ exitCode, signal }) => {
-            io.to(roomId).emit(ACTIONS.TERMINAL_EXIT, {
-                roomId,
-                exitCode,
-                signal,
-                socketId
-            });
-            activeTerminals.delete(roomId);
-        });
-
-        return terminal;
-    } catch (error) {
-        console.error('Failed to initialize terminal:', error);
-        throw error;
-    }
 }
 
 // Execute code with real-time output
@@ -142,7 +93,7 @@ async function executeCode(code, language, roomId, socketId) {
             const compileProcess = spawn('g++', [filename, '-o', 'script', '-std=c++11'], { cwd: workspacePath });
             
             compileProcess.stderr.on('data', (data) => {
-                io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
+                io.to(roomId).emit('execution-error', {
                     roomId,
                     error: data.toString(),
                     socketId
@@ -156,7 +107,7 @@ async function executeCode(code, language, roomId, socketId) {
                     activeProcesses.set(processId, runProcess);
 
                     runProcess.stdout.on('data', (data) => {
-                        io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
+                        io.to(roomId).emit('execution-output', {
                             roomId,
                             output: data.toString(),
                             socketId
@@ -164,7 +115,7 @@ async function executeCode(code, language, roomId, socketId) {
                     });
 
                     runProcess.stderr.on('data', (data) => {
-                        io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
+                        io.to(roomId).emit('execution-error', {
                             roomId,
                             error: data.toString(),
                             socketId
@@ -172,7 +123,7 @@ async function executeCode(code, language, roomId, socketId) {
                     });
 
                     runProcess.on('close', (exitCode) => {
-                        io.to(roomId).emit(ACTIONS.EXECUTION_END, {
+                        io.to(roomId).emit('execution-end', {
                             roomId,
                             exitCode,
                             socketId
@@ -180,7 +131,7 @@ async function executeCode(code, language, roomId, socketId) {
                         activeProcesses.delete(processId);
                     });
                 } else {
-                    io.to(roomId).emit(ACTIONS.EXECUTION_END, {
+                    io.to(roomId).emit('execution-end', {
                         roomId,
                         exitCode: code,
                         socketId
@@ -192,7 +143,7 @@ async function executeCode(code, language, roomId, socketId) {
             const compileProcess = spawn('gcc', [filename, '-o', 'script'], { cwd: workspacePath });
             
             compileProcess.stderr.on('data', (data) => {
-                io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
+                io.to(roomId).emit('execution-error', {
                     roomId,
                     error: data.toString(),
                     socketId
@@ -206,7 +157,7 @@ async function executeCode(code, language, roomId, socketId) {
                     activeProcesses.set(processId, runProcess);
 
                     runProcess.stdout.on('data', (data) => {
-                        io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
+                        io.to(roomId).emit('execution-output', {
                             roomId,
                             output: data.toString(),
                             socketId
@@ -214,7 +165,7 @@ async function executeCode(code, language, roomId, socketId) {
                     });
 
                     runProcess.stderr.on('data', (data) => {
-                        io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
+                        io.to(roomId).emit('execution-error', {
                             roomId,
                             error: data.toString(),
                             socketId
@@ -222,7 +173,7 @@ async function executeCode(code, language, roomId, socketId) {
                     });
 
                     runProcess.on('close', (exitCode) => {
-                        io.to(roomId).emit(ACTIONS.EXECUTION_END, {
+                        io.to(roomId).emit('execution-end', {
                             roomId,
                             exitCode,
                             socketId
@@ -230,7 +181,7 @@ async function executeCode(code, language, roomId, socketId) {
                         activeProcesses.delete(processId);
                     });
                 } else {
-                    io.to(roomId).emit(ACTIONS.EXECUTION_END, {
+                    io.to(roomId).emit('execution-end', {
                         roomId,
                         exitCode: code,
                         socketId
@@ -243,7 +194,7 @@ async function executeCode(code, language, roomId, socketId) {
             activeProcesses.set(processId, process);
 
             process.stdout.on('data', (data) => {
-                io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
+                io.to(roomId).emit('execution-output', {
                     roomId,
                     output: data.toString(),
                     socketId
@@ -251,7 +202,7 @@ async function executeCode(code, language, roomId, socketId) {
             });
 
             process.stderr.on('data', (data) => {
-                io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
+                io.to(roomId).emit('execution-error', {
                     roomId,
                     error: data.toString(),
                     socketId
@@ -259,7 +210,7 @@ async function executeCode(code, language, roomId, socketId) {
             });
 
             process.on('close', (exitCode) => {
-                io.to(roomId).emit(ACTIONS.EXECUTION_END, {
+                io.to(roomId).emit('execution-end', {
                     roomId,
                     exitCode,
                     socketId
@@ -271,7 +222,7 @@ async function executeCode(code, language, roomId, socketId) {
         return processId;
     } catch (error) {
         console.error('Code execution error:', error);
-        io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
+        io.to(roomId).emit('execution-error', {
             roomId,
             error: error.message,
             socketId
@@ -284,13 +235,13 @@ async function executeCode(code, language, roomId, socketId) {
 io.on('connection', (socket) => {
     console.log('Socket connected:', socket.id);
 
-    socket.on(ACTIONS.JOIN, ({ roomId, username }) => {
+    socket.on('join', ({ roomId, username }) => {
         userSocketMap[socket.id] = username;
         socket.join(roomId);
         
         const clients = getAllConnectedClients(roomId);
         clients.forEach(({ socketId }) => {
-            io.to(socketId).emit(ACTIONS.JOINED, {
+            io.to(socketId).emit('joined', {
                 clients,
                 username,
                 socketId: socket.id,
@@ -298,49 +249,18 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on(ACTIONS.CODE_CHANGE, ({ roomId, code }) => {
-        socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { code });
+    socket.on('code-change', ({ roomId, code }) => {
+        socket.in(roomId).emit('code-change', { code });
     });
 
-    socket.on(ACTIONS.SYNC_CODE, ({ socketId, code }) => {
-        io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
-    });
-
-    // Terminal command handling
-    socket.on(ACTIONS.TERMINAL_COMMAND, async ({ roomId, command }) => {
-        try {
-            let terminal = activeTerminals.get(roomId);
-            
-            if (!terminal) {
-                terminal = await initializeTerminal(roomId, socket.id);
-            }
-            
-            // Send command with newline to execute it
-            terminal.write(command + '\n');
-            
-            console.log(`Terminal command executed: ${command} in room ${roomId}`);
-        } catch (error) {
-            console.error('Terminal command error:', error);
-            socket.emit(ACTIONS.TERMINAL_OUTPUT, {
-                roomId,
-                output: `Error: ${error.message}\r\n`,
-                socketId: socket.id
-            });
-        }
-    });
-
-    // Terminal resize handling
-    socket.on(ACTIONS.TERMINAL_RESIZE, ({ roomId, cols, rows }) => {
-        const terminal = activeTerminals.get(roomId);
-        if (terminal) {
-            terminal.resize(cols, rows);
-        }
+    socket.on('sync-code', ({ socketId, code }) => {
+        io.to(socketId).emit('code-change', { code });
     });
 
     // Code execution handling
-    socket.on(ACTIONS.EXECUTE_CODE, async ({ roomId, code, language }) => {
+    socket.on('execute-code', async ({ roomId, code, language }) => {
         try {
-            io.to(roomId).emit(ACTIONS.EXECUTION_START, {
+            io.to(roomId).emit('execution-start', {
                 roomId,
                 language,
                 socketId: socket.id
@@ -352,7 +272,7 @@ io.on('connection', (socket) => {
             socket.processId = processId;
         } catch (error) {
             console.error('Code execution error:', error);
-            socket.emit(ACTIONS.EXECUTION_ERROR, {
+            socket.emit('execution-error', {
                 roomId,
                 error: error.message,
                 socketId: socket.id
@@ -361,7 +281,7 @@ io.on('connection', (socket) => {
     });
 
     // Stop execution
-    socket.on(ACTIONS.EXECUTION_STOP, ({ roomId }) => {
+    socket.on('execution-stop', ({ roomId }) => {
         const processId = socket.processId;
         if (processId && activeProcesses.has(processId)) {
             const process = activeProcesses.get(processId);
@@ -370,73 +290,10 @@ io.on('connection', (socket) => {
         }
     });
 
-    // File operations
-    socket.on(ACTIONS.FILE_WRITE, async ({ roomId, filename, content }) => {
-        try {
-            const workspacePath = workspacePaths.get(roomId) || path.join(workspaceDir, roomId);
-            const filePath = path.join(workspacePath, filename);
-            await fs.writeFile(filePath, content);
-            
-            socket.emit(ACTIONS.FILE_WRITE, {
-                roomId,
-                filename,
-                success: true
-            });
-        } catch (error) {
-            socket.emit(ACTIONS.FILE_WRITE, {
-                roomId,
-                filename,
-                success: false,
-                error: error.message
-            });
-        }
-    });
-
-    socket.on(ACTIONS.FILE_READ, async ({ roomId, filename }) => {
-        try {
-            const workspacePath = workspacePaths.get(roomId) || path.join(workspaceDir, roomId);
-            const filePath = path.join(workspacePath, filename);
-            const content = await fs.readFile(filePath, 'utf8');
-            
-            socket.emit(ACTIONS.FILE_READ, {
-                roomId,
-                filename,
-                content,
-                success: true
-            });
-        } catch (error) {
-            socket.emit(ACTIONS.FILE_READ, {
-                roomId,
-                filename,
-                success: false,
-                error: error.message
-            });
-        }
-    });
-
-    socket.on(ACTIONS.FILE_LIST, async ({ roomId }) => {
-        try {
-            const workspacePath = workspacePaths.get(roomId) || path.join(workspaceDir, roomId);
-            const files = await fs.readdir(workspacePath);
-            
-            socket.emit(ACTIONS.FILE_LIST, {
-                roomId,
-                files,
-                success: true
-            });
-        } catch (error) {
-            socket.emit(ACTIONS.FILE_LIST, {
-                roomId,
-                success: false,
-                error: error.message
-            });
-        }
-    });
-
     socket.on('disconnecting', () => {
         const rooms = [...socket.rooms];
         rooms.forEach((roomId) => {
-            socket.in(roomId).emit(ACTIONS.DISCONNECTED, {
+            socket.in(roomId).emit('disconnected', {
                 socketId: socket.id,
                 username: userSocketMap[socket.id],
             });
@@ -446,22 +303,5 @@ io.on('connection', (socket) => {
     });
 });
 
-// Cleanup on server shutdown
-process.on('SIGINT', () => {
-    console.log('Shutting down server...');
-    
-    // Kill all active processes
-    activeProcesses.forEach((process) => {
-        process.kill('SIGTERM');
-    });
-    
-    // Kill all active terminals
-    activeTerminals.forEach((terminal) => {
-        terminal.kill();
-    });
-    
-    process.exit(0);
-});
-
 const PORT = process.env.PORT || 3333;
-server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+server.listen(PORT, () => console.log(`Simple test server listening on port ${PORT}`)); 
