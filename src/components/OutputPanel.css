@@ -1,0 +1,292 @@
+.output-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1e1e1e;
+    border-top: 2px solid #333;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    max-height: 40vh;
+    min-height: 200px;
+}
+
+.output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #444;
+    user-select: none;
+}
+
+.output-title {
+    display: flex;
+    align-items: center;
+    color: #f8f8f2;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.output-icon {
+    margin-right: 8px;
+    font-size: 16px;
+    color: #50fa7b;
+}
+
+.language-badge {
+    margin-left: 8px;
+    padding: 2px 6px;
+    background: #444;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #f8f8f2;
+}
+
+.output-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.output-control-btn {
+    background: transparent;
+    border: none;
+    color: #f8f8f2;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.output-control-btn:hover {
+    background: #444;
+}
+
+.output-control-btn.stop:hover {
+    background: #ff5555;
+}
+
+.output-control-btn.clear:hover {
+    background: #ff6e67;
+}
+
+.output-control-btn.minimize:hover {
+    background: #666;
+}
+
+.output-content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.output-content {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #f8f8f2;
+}
+
+.execution-status {
+    display: flex;
+    align-items: center;
+    color: #f1fa8c;
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+.spinner {
+    margin-right: 8px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.output-results {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stdout-section,
+.stderr-section {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.stdout-section {
+    background: #2d2d2d;
+    border-left: 3px solid #50fa7b;
+}
+
+.stderr-section {
+    background: #2d2d2d;
+    border-left: 3px solid #ff5555;
+}
+
+.section-header {
+    padding: 6px 12px;
+    background: #444;
+    color: #f8f8f2;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.section-content {
+    padding: 8px 12px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.output-line {
+    margin: 2px 0;
+    word-wrap: break-word;
+}
+
+.output-error {
+    margin: 2px 0;
+    color: #ff5555;
+    word-wrap: break-word;
+}
+
+.output-empty {
+    height: 1.4em;
+}
+
+.exit-status {
+    padding: 8px 12px;
+    background: #2d2d2d;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #f8f8f2;
+}
+
+.exit-status .success {
+    color: #50fa7b;
+    font-weight: bold;
+}
+
+.exit-status .error {
+    color: #ff5555;
+    font-weight: bold;
+}
+
+.no-output {
+    color: #888;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.input-section {
+    padding: 12px;
+    background: #2d2d2d;
+    border-top: 1px solid #444;
+}
+
+.input-section form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-prompt {
+    color: #f8f8f2;
+    font-weight: 600;
+    font-size: 12px;
+    min-width: 50px;
+}
+
+.input-field {
+    flex: 1;
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: #f8f8f2;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #50fa7b;
+}
+
+.input-submit {
+    background: #50fa7b;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #1e1e1e;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.input-submit:hover {
+    background: #69ff94;
+}
+
+/* Scrollbar styling */
+.output-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.output-content::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+.output-content::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.output-content::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+.section-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.section-content::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+.section-content::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.section-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .output-panel {
+        max-height: 50vh;
+    }
+    
+    .output-content {
+        font-size: 12px;
+    }
+    
+    .input-section {
+        padding: 8px;
+    }
+} 

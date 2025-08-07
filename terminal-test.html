@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #f8f8f2;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .test-title {
+            color: #50fa7b;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .test-description {
+            color: #bfbfbf;
+            margin-bottom: 15px;
+        }
+        .test-command {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #bd93f9;
+            margin: 10px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .feature-list li:before {
+            content: "✓";
+            color: #50fa7b;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 style="color: #bd93f9; text-align: center;">Terminal Test Page</h1>
+        
+        <div class="test-section">
+            <div class="test-title">Interactive Terminal Features</div>
+            <div class="test-description">
+                The terminal now supports direct keyboard input with the following features:
+            </div>
+            <ul class="feature-list">
+                <li><strong>Direct Typing:</strong> Click in the terminal and type commands directly</li>
+                <li><strong>Real-time Execution:</strong> Press Enter to execute commands immediately</li>
+                <li><strong>Command History:</strong> Use ↑/↓ arrow keys to navigate through previous commands</li>
+                <li><strong>Blinking Cursor:</strong> Visual cursor indicator for realistic terminal experience</li>
+                <li><strong>Auto-scroll:</strong> Terminal automatically scrolls to show latest output</li>
+                <li><strong>Process Control:</strong> Use Ctrl+C to interrupt running processes</li>
+                <li><strong>Visual Feedback:</strong> Processing indicator shows when commands are being executed</li>
+                <li><strong>Multi-language Support:</strong> Execute JavaScript, Python, C, C++ code</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">Test Commands</div>
+            <div class="test-description">
+                Try these commands in the terminal:
+            </div>
+            <div class="test-command">ls</div>
+            <div class="test-command">pwd</div>
+            <div class="test-command">echo "Hello World"</div>
+            <div class="test-command">node -e "console.log('Node.js works!')"</div>
+            <div class="test-command">python3 -c "print('Python works!')"</div>
+            <div class="test-command">gcc --version</div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">Terminal Controls</div>
+            <div class="test-description">
+                Available keyboard shortcuts:
+            </div>
+            <ul class="feature-list">
+                <li><strong>Enter:</strong> Execute current command</li>
+                <li><strong>↑/↓:</strong> Navigate command history</li>
+                <li><strong>Ctrl+C:</strong> Interrupt running process</li>
+                <li><strong>Ctrl+L:</strong> Clear terminal screen</li>
+                <li><strong>Backspace:</strong> Delete character</li>
+                <li><strong>←/→:</strong> Move cursor left/right</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">Visual Indicators</div>
+            <div class="test-description">
+                The terminal shows various status indicators:
+            </div>
+            <ul class="feature-list">
+                <li><strong>● Green dot:</strong> Connected to server</li>
+                <li><strong>⟳ Spinning icon:</strong> Command being processed</li>
+                <li><strong>Blinking cursor:</strong> Ready for input</li>
+                <li><strong>Color-coded output:</strong> Different colors for different types of output</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 
