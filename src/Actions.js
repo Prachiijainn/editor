@@ -7,6 +7,7 @@ const ACTIONS = {
     LEAVE: 'leave',
     // Terminal actions
     TERMINAL_COMMAND: 'terminal-command',
+    TERMINAL_DATA: 'terminal-data',
     TERMINAL_OUTPUT: 'terminal-output',
     TERMINAL_RESIZE: 'terminal-resize',
     TERMINAL_EXIT: 'terminal-exit',

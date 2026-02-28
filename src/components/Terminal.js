@@ -59,7 +59,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
 
         const fitAddon = new FitAddon();
         const webLinksAddon = new WebLinksAddon();
-        
+
         term.loadAddon(fitAddon);
         term.loadAddon(webLinksAddon);
 
@@ -85,19 +85,28 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
         term.writeln('');
 
         // Handle terminal input
-        term.onData(handleTerminalInput);
+        term.onData((data) => {
+            if (socketRef && socketRef.current) {
+                socketRef.current.emit(ACTIONS.TERMINAL_DATA, {
+                    roomId,
+                    data
+                });
+                setIsProcessing(true);
+            }
+        });
 
         // Listen for terminal output from socket (real-time)
         if (socketRef && socketRef.current) {
-            socketRef.current.on('terminal-output', (data) => {
+            socketRef.current.on(ACTIONS.TERMINAL_OUTPUT, (data) => {
                 // Only show output for the current room
                 if (data.roomId === roomId) {
                     term.write(data.output);
                     setIsProcessing(false);
+                    setIsConnected(true);
                 }
             });
 
-            socketRef.current.on('terminal-exit', (data) => {
+            socketRef.current.on(ACTIONS.TERMINAL_EXIT, (data) => {
                 if (data.roomId === roomId) {
                     term.writeln(`\r\n\x1b[1;31mTerminal session ended (exit code: ${data.exitCode})\x1b[0m`);
                     setIsConnected(false);
@@ -106,7 +115,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
             });
 
             // Handle terminal resize
-            socketRef.current.on('terminal-resize', (data) => {
+            socketRef.current.on(ACTIONS.TERMINAL_RESIZE, (data) => {
                 if (data.roomId === roomId && fitAddonRef.current) {
                     fitAddonRef.current.fit();
                 }
@@ -120,7 +129,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                 // Notify server of resize
                 if (socketRef?.current) {
                     const dimensions = fitAddonRef.current.proposeDimensions();
-                    socketRef.current.emit('terminal-resize', {
+                    socketRef.current.emit(ACTIONS.TERMINAL_RESIZE, {
                         roomId,
                         cols: dimensions.cols,
                         rows: dimensions.rows
@@ -136,111 +145,12 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
             term.dispose();
             // Remove socket listeners
             if (socketRef && socketRef.current) {
-                socketRef.current.off('terminal-output');
-                socketRef.current.off('terminal-exit');
-                socketRef.current.off('terminal-resize');
+                socketRef.current.off(ACTIONS.TERMINAL_OUTPUT);
+                socketRef.current.off(ACTIONS.TERMINAL_EXIT);
+                socketRef.current.off(ACTIONS.TERMINAL_RESIZE);
             }
         };
     }, [socketRef, roomId]);
-
-    // Handle terminal input
-    const handleTerminalInput = useCallback((data) => {
-        if (!terminal) return;
-
-        const code = data.charCodeAt(0);
-        
-        // Handle special keys
-        if (code === 13) { // Enter
-            const line = terminal.buffer.active.getLine(terminal.buffer.active.baseY + terminal.buffer.active.cursorY);
-            const command = line.translateToString().trim();
-
-            if (command) {
-                // Add to command history
-                setCommandHistory(prev => [...prev, command]);
-                setHistoryIndex(-1);
-                setCurrentCommand('');
-                setIsConnected(true);
-                setIsProcessing(true);
-                
-                // Emit command to backend via socket for real-time execution
-                if (socketRef && socketRef.current) {
-                    socketRef.current.emit('terminal-command', {
-                        command,
-                        roomId
-                    });
-                }
-            }
-            terminal.write('\r\n');
-        } else if (code === 8) { // Backspace
-            if (terminal.buffer.active.cursorX > 0) {
-                terminal.write('\b \b');
-            }
-        } else if (code === 12) { // Ctrl+L (clear screen)
-            terminal.clear();
-            terminal.write('\x1b[1;36mTerminal cleared\x1b[0m\r\n');
-        } else if (code === 3) { // Ctrl+C
-            terminal.write('^C\r\n');
-            terminal.write('\x1b[1;33mProcess interrupted\x1b[0m\r\n');
-            setIsProcessing(false);
-        } else if (code === 26) { // Ctrl+Z
-            terminal.write('^Z\r\n');
-            terminal.write('\x1b[1;33mProcess suspended\x1b[0m\r\n');
-        } else if (code === 27) { // Escape sequence
-            const nextChar = data.charCodeAt(1);
-            if (nextChar === 91) { // [
-                const thirdChar = data.charCodeAt(2);
-                if (thirdChar === 65) { // Up arrow
-                    navigateHistory('up');
-                    return;
-                } else if (thirdChar === 66) { // Down arrow
-                    navigateHistory('down');
-                    return;
-                } else if (thirdChar === 67) { // Right arrow
-                    // Allow normal cursor movement
-                    terminal.write(data);
-                    return;
-                } else if (thirdChar === 68) { // Left arrow
-                    // Allow normal cursor movement
-                    terminal.write(data);
-                    return;
-                }
-            }
-        } else {
-            // Regular character input
-            terminal.write(data);
-        }
-    }, [terminal, commandHistory, historyIndex]);
-
-    // Navigate command history
-    const navigateHistory = useCallback((direction) => {
-        if (commandHistory.length === 0) return;
-
-        let newIndex = historyIndex;
-        if (direction === 'up') {
-            newIndex = Math.min(historyIndex + 1, commandHistory.length - 1);
-        } else {
-            newIndex = Math.max(historyIndex - 1, -1);
-        }
-
-        setHistoryIndex(newIndex);
-        
-        // Clear current line and show history command
-        const currentLine = terminal.buffer.active.getLine(terminal.buffer.active.baseY + terminal.buffer.active.cursorY);
-        const currentText = currentLine.translateToString();
-        
-        // Move cursor to beginning of line
-        terminal.write('\r');
-        // Clear the line
-        terminal.write('\x1b[K');
-        
-        if (newIndex >= 0) {
-            const historyCommand = commandHistory[commandHistory.length - 1 - newIndex];
-            terminal.write(historyCommand);
-            setCurrentCommand(historyCommand);
-        } else {
-            setCurrentCommand('');
-        }
-    }, [commandHistory, historyIndex, terminal]);
 
     // Handle terminal resize
     const handleMouseDown = (e) => {
@@ -284,7 +194,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                     {isProcessing && <span className="processing-indicator">⟳</span>}
                 </div>
                 <div className="terminal-controls">
-                    <button 
+                    <button
                         className="terminal-control-btn minimize"
                         onClick={() => onToggle()}
                         title="Minimize Terminal"
@@ -293,8 +203,8 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                     </button>
                 </div>
             </div>
-            <div 
-                ref={terminalElementRef} 
+            <div
+                ref={terminalElementRef}
                 className="terminal-content"
                 onMouseDown={handleMouseDown}
             />
