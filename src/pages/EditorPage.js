@@ -28,19 +28,32 @@ const EditorPage = () => {
     useEffect(() => {
         const init = async () => {
             socketRef.current = await initSocket();
+            socketRef.current.on('connect', () => {
+                console.log('socket connected:', socketRef.current.id);
+                socketRef.current.emit(ACTIONS.JOIN, {
+                    roomId,
+                    username: location.state?.username,
+                });
+
+                // If we have existing code, sync it to the room
+                if (codeRef.current) {
+                    socketRef.current.emit(ACTIONS.CODE_CHANGE, {
+                        roomId,
+                        code: codeRef.current,
+                    });
+                }
+            });
+
             socketRef.current.on('connect_error', (err) => handleErrors(err));
             socketRef.current.on('connect_failed', (err) => handleErrors(err));
 
             function handleErrors(e) {
                 console.log('socket error', e);
-                toast.error('Socket connection failed, try again later.');
-                reactNavigator('/');
+                // Don't redirect immediately on connection error, let it retry
+                if (!socketRef.current.connected) {
+                    toast.error('Connection lost. Retrying...');
+                }
             }
-
-            socketRef.current.emit(ACTIONS.JOIN, {
-                roomId,
-                username: location.state?.username,
-            });
 
             // Listening for joined event
             socketRef.current.on(
@@ -51,10 +64,14 @@ const EditorPage = () => {
                         console.log(`${username} joined`);
                     }
                     setClients(clients);
-                    socketRef.current.emit(ACTIONS.SYNC_CODE, {
-                        code: codeRef.current,
-                        socketId,
-                    });
+
+                    // Sync code to the newly joined client
+                    if (codeRef.current) {
+                        socketRef.current.emit(ACTIONS.SYNC_CODE, {
+                            code: codeRef.current,
+                            socketId,
+                        });
+                    }
                 }
             );
 
@@ -166,7 +183,7 @@ const EditorPage = () => {
                     isOutputVisible={isOutputVisible}
                 />
             </div>
-            
+
             {/* Output Panel */}
             <OutputPanel
                 isVisible={isOutputVisible}
@@ -177,25 +194,25 @@ const EditorPage = () => {
                 onToggle={toggleOutput}
                 language={output?.language}
             />
-            
+
             {/* Output Toggle Button */}
-            <button 
+            <button
                 className="output-toggle-btn"
                 onClick={toggleOutput}
                 title="Toggle Output Panel"
             >
                 {isOutputVisible ? '−' : '▶'}
             </button>
-            
+
             {/* Terminal Toggle Button */}
-            <button 
+            <button
                 className="terminal-toggle-btn"
                 onClick={toggleTerminal}
                 title="Toggle Terminal"
             >
                 {isTerminalVisible ? '−' : '⚡'}
             </button>
-            
+
             {/* Terminal Component */}
             <TerminalComponent
                 socketRef={socketRef}

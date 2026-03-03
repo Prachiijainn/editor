@@ -8,9 +8,15 @@ const bodyParser = require('body-parser');
 const fs = require('fs-extra');
 const os = require('os');
 const ACTIONS = require('./src/Actions');
+require('dotenv').config();
+const helmet = require('helmet');
 
 // Initialize express app
-app.use(cors());
+app.use(helmet()); // Basic security headers
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || '*',
+    methods: ["GET", "POST"]
+}));
 app.use(bodyParser.json());
 app.use(express.static('build'));
 
@@ -22,9 +28,11 @@ app.use((req, res, next) => {
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: process.env.CORS_ORIGIN || "*",
         methods: ["GET", "POST"]
-    }
+    },
+    pingInterval: 25000, // Stay alive through proxies
+    pingTimeout: 60000
 });
 
 // Store active terminals and processes
@@ -36,6 +44,8 @@ const workspacePaths = new Map();
 // Create workspace directory
 const workspaceDir = path.join(os.tmpdir(), 'realtime-editor-workspaces');
 fs.ensureDirSync(workspaceDir);
+
+const PROCESS_TIMEOUT = 30000; // 30 seconds timeout for execution
 
 function getAllConnectedClients(roomId) {
     return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
@@ -53,7 +63,7 @@ async function initializeTerminal(roomId, socketId) {
     try {
         const pty = require('node-pty');
         const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
-        
+
         const workspacePath = path.join(workspaceDir, roomId);
         fs.ensureDirSync(workspacePath);
         workspacePaths.set(roomId, workspacePath);
@@ -135,12 +145,13 @@ async function executeCode(code, language, roomId, socketId) {
         // Create process
         const { spawn } = require('child_process');
         const processId = `${roomId}-${Date.now()}`;
-        
+
         let process;
         if (language === 'cpp') {
             // For C++, compile first, then run
             const compileProcess = spawn('g++', [filename, '-o', 'script', '-std=c++11'], { cwd: workspacePath });
-            
+            const compileTimeout = setTimeout(() => compileProcess.kill('SIGTERM'), PROCESS_TIMEOUT);
+
             compileProcess.stderr.on('data', (data) => {
                 io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
                     roomId,
@@ -150,10 +161,12 @@ async function executeCode(code, language, roomId, socketId) {
             });
 
             compileProcess.on('close', (code) => {
+                clearTimeout(compileTimeout);
                 if (code === 0) {
                     // Compilation successful, run the executable
                     const runProcess = spawn('./script', [], { cwd: workspacePath });
                     activeProcesses.set(processId, runProcess);
+                    const runTimeout = setTimeout(() => runProcess.kill('SIGTERM'), PROCESS_TIMEOUT);
 
                     runProcess.stdout.on('data', (data) => {
                         io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
@@ -172,6 +185,7 @@ async function executeCode(code, language, roomId, socketId) {
                     });
 
                     runProcess.on('close', (exitCode) => {
+                        clearTimeout(runTimeout);
                         io.to(roomId).emit(ACTIONS.EXECUTION_END, {
                             roomId,
                             exitCode,
@@ -190,7 +204,8 @@ async function executeCode(code, language, roomId, socketId) {
         } else if (language === 'c') {
             // For C, compile first, then run
             const compileProcess = spawn('gcc', [filename, '-o', 'script'], { cwd: workspacePath });
-            
+            const compileTimeout = setTimeout(() => compileProcess.kill('SIGTERM'), PROCESS_TIMEOUT);
+
             compileProcess.stderr.on('data', (data) => {
                 io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
                     roomId,
@@ -200,10 +215,12 @@ async function executeCode(code, language, roomId, socketId) {
             });
 
             compileProcess.on('close', (code) => {
+                clearTimeout(compileTimeout);
                 if (code === 0) {
                     // Compilation successful, run the executable
                     const runProcess = spawn('./script', [], { cwd: workspacePath });
                     activeProcesses.set(processId, runProcess);
+                    const runTimeout = setTimeout(() => runProcess.kill('SIGTERM'), PROCESS_TIMEOUT);
 
                     runProcess.stdout.on('data', (data) => {
                         io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
@@ -222,6 +239,7 @@ async function executeCode(code, language, roomId, socketId) {
                     });
 
                     runProcess.on('close', (exitCode) => {
+                        clearTimeout(runTimeout);
                         io.to(roomId).emit(ACTIONS.EXECUTION_END, {
                             roomId,
                             exitCode,
@@ -242,6 +260,10 @@ async function executeCode(code, language, roomId, socketId) {
             process = spawn(command, args, { cwd: workspacePath });
             activeProcesses.set(processId, process);
 
+            const processTimeout = setTimeout(() => {
+                process.kill('SIGTERM');
+            }, PROCESS_TIMEOUT);
+
             process.stdout.on('data', (data) => {
                 io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
                     roomId,
@@ -259,6 +281,7 @@ async function executeCode(code, language, roomId, socketId) {
             });
 
             process.on('close', (exitCode) => {
+                clearTimeout(processTimeout);
                 io.to(roomId).emit(ACTIONS.EXECUTION_END, {
                     roomId,
                     exitCode,
@@ -287,7 +310,7 @@ io.on('connection', (socket) => {
     socket.on(ACTIONS.JOIN, ({ roomId, username }) => {
         userSocketMap[socket.id] = username;
         socket.join(roomId);
-        
+
         const clients = getAllConnectedClients(roomId);
         clients.forEach(({ socketId }) => {
             io.to(socketId).emit(ACTIONS.JOINED, {
@@ -306,19 +329,27 @@ io.on('connection', (socket) => {
         io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
     });
 
-    // Terminal command handling
-    socket.on(ACTIONS.TERMINAL_COMMAND, async ({ roomId, command }) => {
+    // Terminal raw data handling (Raw PTY streaming)
+    socket.on(ACTIONS.TERMINAL_DATA, async ({ roomId, data }) => {
         try {
             let terminal = activeTerminals.get(roomId);
-            
             if (!terminal) {
                 terminal = await initializeTerminal(roomId, socket.id);
             }
-            
-            // Send command with newline to execute it
+            terminal.write(data);
+        } catch (error) {
+            console.error('Terminal data error:', error);
+        }
+    });
+
+    // Terminal command handling (for manual command execution if needed)
+    socket.on(ACTIONS.TERMINAL_COMMAND, async ({ roomId, command }) => {
+        try {
+            let terminal = activeTerminals.get(roomId);
+            if (!terminal) {
+                terminal = await initializeTerminal(roomId, socket.id);
+            }
             terminal.write(command + '\n');
-            
-            console.log(`Terminal command executed: ${command} in room ${roomId}`);
         } catch (error) {
             console.error('Terminal command error:', error);
             socket.emit(ACTIONS.TERMINAL_OUTPUT, {
@@ -347,7 +378,7 @@ io.on('connection', (socket) => {
             });
 
             const processId = await executeCode(code, language, roomId, socket.id);
-            
+
             // Store process ID for potential stopping
             socket.processId = processId;
         } catch (error) {
@@ -376,7 +407,7 @@ io.on('connection', (socket) => {
             const workspacePath = workspacePaths.get(roomId) || path.join(workspaceDir, roomId);
             const filePath = path.join(workspacePath, filename);
             await fs.writeFile(filePath, content);
-            
+
             socket.emit(ACTIONS.FILE_WRITE, {
                 roomId,
                 filename,
@@ -397,7 +428,7 @@ io.on('connection', (socket) => {
             const workspacePath = workspacePaths.get(roomId) || path.join(workspaceDir, roomId);
             const filePath = path.join(workspacePath, filename);
             const content = await fs.readFile(filePath, 'utf8');
-            
+
             socket.emit(ACTIONS.FILE_READ, {
                 roomId,
                 filename,
@@ -418,7 +449,7 @@ io.on('connection', (socket) => {
         try {
             const workspacePath = workspacePaths.get(roomId) || path.join(workspaceDir, roomId);
             const files = await fs.readdir(workspacePath);
-            
+
             socket.emit(ACTIONS.FILE_LIST, {
                 roomId,
                 files,
@@ -440,6 +471,17 @@ io.on('connection', (socket) => {
                 socketId: socket.id,
                 username: userSocketMap[socket.id],
             });
+
+            // Cleanup PTY if room is empty (except for the current socket which is leaving)
+            const remainingClients = io.sockets.adapter.rooms.get(roomId);
+            if (remainingClients && remainingClients.size <= 1) {
+                const terminal = activeTerminals.get(roomId);
+                if (terminal) {
+                    terminal.kill();
+                    activeTerminals.delete(roomId);
+                    console.log(`PTY cleanup: Room ${roomId} is empty.`);
+                }
+            }
         });
         delete userSocketMap[socket.id];
         socket.leave();
@@ -449,17 +491,17 @@ io.on('connection', (socket) => {
 // Cleanup on server shutdown
 process.on('SIGINT', () => {
     console.log('Shutting down server...');
-    
+
     // Kill all active processes
     activeProcesses.forEach((process) => {
         process.kill('SIGTERM');
     });
-    
+
     // Kill all active terminals
     activeTerminals.forEach((terminal) => {
         terminal.kill();
     });
-    
+
     process.exit(0);
 });
 

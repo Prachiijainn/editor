@@ -38,7 +38,7 @@ int main() {
 }`
             }
         };
-        
+
         this.currentProcess = null;
         this.isExecuting = false;
         this.outputCallbacks = new Map();
@@ -82,7 +82,7 @@ int main() {
 
             // Emit execution start
             if (this.socketRef?.current) {
-                this.socketRef.current.emit('execute-code', {
+                this.socketRef.current.emit(ACTIONS.EXECUTE_CODE, {
                     roomId,
                     code,
                     language
@@ -94,7 +94,7 @@ int main() {
                 const socket = this.socketRef.current;
 
                 // Listen for execution start
-                socket.on('execution-start', (data) => {
+                socket.on(ACTIONS.EXECUTION_START, (data) => {
                     if (data.roomId === roomId) {
                         if (callbacks.onStart) {
                             callbacks.onStart(data);
@@ -103,7 +103,7 @@ int main() {
                 });
 
                 // Listen for real-time output
-                socket.on('execution-output', (data) => {
+                socket.on(ACTIONS.EXECUTION_OUTPUT, (data) => {
                     if (data.roomId === roomId) {
                         const callback = this.outputCallbacks.get(executionId);
                         if (callback) {
@@ -113,7 +113,7 @@ int main() {
                 });
 
                 // Listen for errors
-                socket.on('execution-error', (data) => {
+                socket.on(ACTIONS.EXECUTION_ERROR, (data) => {
                     if (data.roomId === roomId) {
                         const callback = this.errorCallbacks.get(executionId);
                         if (callback) {
@@ -123,18 +123,18 @@ int main() {
                 });
 
                 // Listen for execution end
-                socket.on('execution-end', (data) => {
+                socket.on(ACTIONS.EXECUTION_END, (data) => {
                     if (data.roomId === roomId) {
                         const callback = this.endCallbacks.get(executionId);
                         if (callback) {
                             callback(data.exitCode);
                         }
-                        
+
                         // Clean up callbacks
                         this.outputCallbacks.delete(executionId);
                         this.errorCallbacks.delete(executionId);
                         this.endCallbacks.delete(executionId);
-                        
+
                         this.isExecuting = false;
                     }
                 });
@@ -150,7 +150,7 @@ int main() {
     // Stop current execution
     stopExecution(roomId) {
         if (this.socketRef?.current) {
-            this.socketRef.current.emit('execution-stop', { roomId });
+            this.socketRef.current.emit(ACTIONS.EXECUTION_STOP, { roomId });
         }
         this.isExecuting = false;
     }
@@ -168,13 +168,13 @@ int main() {
                 return;
             }
 
-            this.socketRef.current.emit('file-write', {
+            this.socketRef.current.emit(ACTIONS.FILE_WRITE, {
                 roomId,
                 filename,
                 content
             });
 
-            this.socketRef.current.once('file-write', (data) => {
+            this.socketRef.current.once(ACTIONS.FILE_WRITE, (data) => {
                 if (data.success) {
                     resolve(data);
                 } else {
@@ -192,12 +192,12 @@ int main() {
                 return;
             }
 
-            this.socketRef.current.emit('file-read', {
+            this.socketRef.current.emit(ACTIONS.FILE_READ, {
                 roomId,
                 filename
             });
 
-            this.socketRef.current.once('file-read', (data) => {
+            this.socketRef.current.once(ACTIONS.FILE_READ, (data) => {
                 if (data.success) {
                     resolve(data.content);
                 } else {
@@ -215,9 +215,9 @@ int main() {
                 return;
             }
 
-            this.socketRef.current.emit('file-list', { roomId });
+            this.socketRef.current.emit(ACTIONS.FILE_LIST, { roomId });
 
-            this.socketRef.current.once('file-list', (data) => {
+            this.socketRef.current.once(ACTIONS.FILE_LIST, (data) => {
                 if (data.success) {
                     resolve(data.files);
                 } else {
