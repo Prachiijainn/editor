@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import ACTIONS from '../Actions';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
@@ -11,9 +12,6 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
     const terminalElementRef = useRef(null);
     const fitAddonRef = useRef(null);
     const [terminal, setTerminal] = useState(null);
-    const [commandHistory, setCommandHistory] = useState([]);
-    const [historyIndex, setHistoryIndex] = useState(-1);
-    const [currentCommand, setCurrentCommand] = useState('');
     const [isResizing, setIsResizing] = useState(false);
     const [terminalHeight, setTerminalHeight] = useState(300);
     const [isConnected, setIsConnected] = useState(false);
@@ -145,9 +143,10 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
             term.dispose();
             // Remove socket listeners
             if (socketRef && socketRef.current) {
-                socketRef.current.off(ACTIONS.TERMINAL_OUTPUT);
-                socketRef.current.off(ACTIONS.TERMINAL_EXIT);
-                socketRef.current.off(ACTIONS.TERMINAL_RESIZE);
+                const socket = socketRef.current;
+                socket.off(ACTIONS.TERMINAL_OUTPUT);
+                socket.off(ACTIONS.TERMINAL_EXIT);
+                socket.off(ACTIONS.TERMINAL_RESIZE);
             }
         };
     }, [socketRef, roomId]);
@@ -180,7 +179,7 @@ const TerminalComponent = ({ socketRef, roomId, isVisible, onToggle }) => {
                 document.removeEventListener('mouseup', handleMouseUp);
             };
         }
-    }, [isResizing]);
+    }, [isResizing, handleMouseMove]);
 
     if (!isVisible) return null;
 

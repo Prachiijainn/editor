@@ -79,7 +79,7 @@ const Editor = ({ socketRef, roomId, onCodeChange, onOutputChange, isOutputVisib
         if (editorRef.current) {
             editorRef.current.setValue(defaultCode);
         }
-        
+
         // Update editor mode based on language
         let mode;
         switch (language) {
@@ -121,59 +121,59 @@ const Editor = ({ socketRef, roomId, onCodeChange, onOutputChange, isOutputVisib
         try {
             await codeExecutor.current.executeCode(code, selectedLanguage, roomId, {
                 onStart: (data) => {
-                    setRealTimeOutput(`Starting execution of ${data.language} code...\n`);
-                },
-                onOutput: (output) => {
-                    setRealTimeOutput(prev => prev + output);
-                    setOutput({
+                    const startMsg = `Starting execution of ${data.language} code...\n`;
+                    setRealTimeOutput(startMsg);
+                    const initialOutput = {
                         success: true,
-                        stdout: realTimeOutput + output,
-                        stderr: executionErrors,
-                        exitCode: 0
-                    });
-                    if (onOutputChange) {
-                        onOutputChange({
-                            success: true,
-                            stdout: realTimeOutput + output,
-                            stderr: executionErrors,
-                            exitCode: 0,
-                            language: selectedLanguage
+                        stdout: startMsg,
+                        stderr: '',
+                        exitCode: null,
+                        language: selectedLanguage
+                    };
+                    setOutput(initialOutput);
+                    if (onOutputChange) onOutputChange(initialOutput);
+                },
+                onOutput: (newOutput) => {
+                    setRealTimeOutput(prev => {
+                        const updatedStdout = prev + newOutput;
+                        setOutput(prevOutput => {
+                            const newOutputObj = {
+                                ...prevOutput,
+                                stdout: updatedStdout,
+                                success: true
+                            };
+                            if (onOutputChange) onOutputChange(newOutputObj);
+                            return newOutputObj;
                         });
-                    }
+                        return updatedStdout;
+                    });
                 },
                 onError: (error) => {
-                    setExecutionErrors(prev => prev + error);
-                    setOutput({
-                        success: false,
-                        stdout: realTimeOutput,
-                        stderr: executionErrors + error,
-                        exitCode: 1
-                    });
-                    if (onOutputChange) {
-                        onOutputChange({
-                            success: false,
-                            stdout: realTimeOutput,
-                            stderr: executionErrors + error,
-                            exitCode: 1,
-                            language: selectedLanguage
+                    setExecutionErrors(prev => {
+                        const updatedStderr = prev + error;
+                        setOutput(prevOutput => {
+                            const newOutputObj = {
+                                ...prevOutput,
+                                stderr: updatedStderr,
+                                success: false
+                            };
+                            if (onOutputChange) onOutputChange(newOutputObj);
+                            return newOutputObj;
                         });
-                    }
+                        return updatedStderr;
+                    });
                 },
                 onEnd: (exitCode) => {
                     setIsExecuting(false);
-                    setOutput(prev => ({
-                        ...prev,
-                        exitCode,
-                        success: exitCode === 0
-                    }));
-                    if (onOutputChange) {
-                        onOutputChange({
-                            ...output,
+                    setOutput(prevOutput => {
+                        const finalOutput = {
+                            ...prevOutput,
                             exitCode,
-                            success: exitCode === 0,
-                            language: selectedLanguage
-                        });
-                    }
+                            success: exitCode === 0
+                        };
+                        if (onOutputChange) onOutputChange(finalOutput);
+                        return finalOutput;
+                    });
                 }
             });
         } catch (error) {

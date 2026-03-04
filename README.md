@@ -84,7 +84,7 @@ npm run build
 npm start
 ```
 
-The application will be available at `http://localhost:3333`
+The application will be available at `http://localhost:3000`
 
 ## 🎯 Usage
 
@@ -118,8 +118,8 @@ The application will be available at `http://localhost:3333`
 Create a `.env` file in the root directory:
 
 ```env
-PORT=3333
-REACT_APP_BACKEND_URL=http://localhost:3333
+PORT=3000
+REACT_APP_BACKEND_URL=http://localhost:3000
 NODE_ENV=development
 ```
 
@@ -157,7 +157,7 @@ const PROCESS_TIMEOUT = 30000;
 
 #### WebSocket Connection Issues
 1. **CORS settings**: Check browser CORS policies
-2. **Firewall**: Ensure port 3333 is open
+2. **Firewall**: Ensure port 3000 is open
 3. **Proxy settings**: Configure proxy if behind corporate firewall
 4. **SSL/TLS**: Use HTTPS in production
 
@@ -197,10 +197,10 @@ The server provides health check endpoints:
 
 ```bash
 # Check server status
-curl http://localhost:3333/health
+curl http://localhost:3000/health
 
 # Check WebSocket connection
-curl http://localhost:3333/ws-health
+curl http://localhost:3000/ws-health
 ```
 
 ### Logging

@@ -31,8 +31,8 @@ const io = new Server(server, {
         origin: process.env.CORS_ORIGIN || "*",
         methods: ["GET", "POST"]
     },
-    pingInterval: 25000, // Stay alive through proxies
-    pingTimeout: 60000
+    pingInterval: 30000, // Stay alive through proxies
+    pingTimeout: 120000
 });
 
 // Store active terminals and processes
@@ -153,9 +153,15 @@ async function executeCode(code, language, roomId, socketId) {
             const compileTimeout = setTimeout(() => compileProcess.kill('SIGTERM'), PROCESS_TIMEOUT);
 
             compileProcess.stderr.on('data', (data) => {
+                const output = data.toString();
                 io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
                     roomId,
-                    error: data.toString(),
+                    error: output,
+                    socketId
+                });
+                io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: `\x1b[1;31m${output}\x1b[0m`,
                     socketId
                 });
             });
@@ -169,17 +175,29 @@ async function executeCode(code, language, roomId, socketId) {
                     const runTimeout = setTimeout(() => runProcess.kill('SIGTERM'), PROCESS_TIMEOUT);
 
                     runProcess.stdout.on('data', (data) => {
+                        const output = data.toString();
                         io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
                             roomId,
-                            output: data.toString(),
+                            output: output,
+                            socketId
+                        });
+                        io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                            roomId,
+                            output: output,
                             socketId
                         });
                     });
 
                     runProcess.stderr.on('data', (data) => {
+                        const output = data.toString();
                         io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
                             roomId,
-                            error: data.toString(),
+                            error: output,
+                            socketId
+                        });
+                        io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                            roomId,
+                            output: `\x1b[1;31m${output}\x1b[0m`,
                             socketId
                         });
                     });
@@ -189,6 +207,11 @@ async function executeCode(code, language, roomId, socketId) {
                         io.to(roomId).emit(ACTIONS.EXECUTION_END, {
                             roomId,
                             exitCode,
+                            socketId
+                        });
+                        io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                            roomId,
+                            output: `\r\n\x1b[1;32mProcess finished with exit code ${exitCode}\x1b[0m\r\n`,
                             socketId
                         });
                         activeProcesses.delete(processId);
@@ -207,9 +230,15 @@ async function executeCode(code, language, roomId, socketId) {
             const compileTimeout = setTimeout(() => compileProcess.kill('SIGTERM'), PROCESS_TIMEOUT);
 
             compileProcess.stderr.on('data', (data) => {
+                const output = data.toString();
                 io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
                     roomId,
-                    error: data.toString(),
+                    error: output,
+                    socketId
+                });
+                io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: `\x1b[1;31m${output}\x1b[0m`,
                     socketId
                 });
             });
@@ -223,17 +252,29 @@ async function executeCode(code, language, roomId, socketId) {
                     const runTimeout = setTimeout(() => runProcess.kill('SIGTERM'), PROCESS_TIMEOUT);
 
                     runProcess.stdout.on('data', (data) => {
+                        const output = data.toString();
                         io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
                             roomId,
-                            output: data.toString(),
+                            output: output,
+                            socketId
+                        });
+                        io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                            roomId,
+                            output: output,
                             socketId
                         });
                     });
 
                     runProcess.stderr.on('data', (data) => {
+                        const output = data.toString();
                         io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
                             roomId,
-                            error: data.toString(),
+                            error: output,
+                            socketId
+                        });
+                        io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                            roomId,
+                            output: `\x1b[1;31m${output}\x1b[0m`,
                             socketId
                         });
                     });
@@ -243,6 +284,11 @@ async function executeCode(code, language, roomId, socketId) {
                         io.to(roomId).emit(ACTIONS.EXECUTION_END, {
                             roomId,
                             exitCode,
+                            socketId
+                        });
+                        io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                            roomId,
+                            output: `\r\n\x1b[1;32mProcess finished with exit code ${exitCode}\x1b[0m\r\n`,
                             socketId
                         });
                         activeProcesses.delete(processId);
@@ -265,17 +311,29 @@ async function executeCode(code, language, roomId, socketId) {
             }, PROCESS_TIMEOUT);
 
             process.stdout.on('data', (data) => {
+                const output = data.toString();
                 io.to(roomId).emit(ACTIONS.EXECUTION_OUTPUT, {
                     roomId,
-                    output: data.toString(),
+                    output: output,
+                    socketId
+                });
+                io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: output,
                     socketId
                 });
             });
 
             process.stderr.on('data', (data) => {
+                const output = data.toString();
                 io.to(roomId).emit(ACTIONS.EXECUTION_ERROR, {
                     roomId,
-                    error: data.toString(),
+                    error: output,
+                    socketId
+                });
+                io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: `\x1b[1;31m${output}\x1b[0m`,
                     socketId
                 });
             });
@@ -285,6 +343,11 @@ async function executeCode(code, language, roomId, socketId) {
                 io.to(roomId).emit(ACTIONS.EXECUTION_END, {
                     roomId,
                     exitCode,
+                    socketId
+                });
+                io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
+                    roomId,
+                    output: `\r\n\x1b[1;32mProcess finished with exit code ${exitCode}\x1b[0m\r\n`,
                     socketId
                 });
                 activeProcesses.delete(processId);
@@ -371,9 +434,9 @@ io.on('connection', (socket) => {
     // Code execution handling
     socket.on(ACTIONS.EXECUTE_CODE, async ({ roomId, code, language }) => {
         try {
-            io.to(roomId).emit(ACTIONS.EXECUTION_START, {
+            io.to(roomId).emit(ACTIONS.TERMINAL_OUTPUT, {
                 roomId,
-                language,
+                output: `\x1b[1;36m> Running code in ${language}...\x1b[0m\r\n`,
                 socketId: socket.id
             });
 
@@ -473,15 +536,18 @@ io.on('connection', (socket) => {
             });
 
             // Cleanup PTY if room is empty (except for the current socket which is leaving)
-            const remainingClients = io.sockets.adapter.rooms.get(roomId);
-            if (remainingClients && remainingClients.size <= 1) {
-                const terminal = activeTerminals.get(roomId);
-                if (terminal) {
-                    terminal.kill();
-                    activeTerminals.delete(roomId);
-                    console.log(`PTY cleanup: Room ${roomId} is empty.`);
+            // Adding a grace period to allow for page refreshes
+            setTimeout(() => {
+                const remainingClients = io.sockets.adapter.rooms.get(roomId);
+                if (!remainingClients || remainingClients.size === 0) {
+                    const terminal = activeTerminals.get(roomId);
+                    if (terminal) {
+                        terminal.kill();
+                        activeTerminals.delete(roomId);
+                        console.log(`PTY cleanup: Room ${roomId} is empty after grace period.`);
+                    }
                 }
-            }
+            }, 10000); // 10 seconds grace period
         });
         delete userSocketMap[socket.id];
         socket.leave();
