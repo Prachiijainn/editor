@@ -94,7 +94,7 @@ const EditorPage = () => {
             socketRef.current.off(ACTIONS.JOINED);
             socketRef.current.off(ACTIONS.DISCONNECTED);
         };
-    }, []);
+    }, [location.state?.username, roomId]);
 
     async function copyRoomId() {
         try {

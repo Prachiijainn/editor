@@ -1,3 +1,5 @@
+import ACTIONS from '../Actions';
+
 class CodeExecutor {
     constructor(socketRef) {
         this.socketRef = socketRef;
